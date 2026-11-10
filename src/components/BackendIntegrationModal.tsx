@@ -86,34 +86,31 @@ export const BackendIntegrationModal: React.FC<BackendIntegrationModalProps> = (
   ]
 }`;
 
-  const expressSnippet = `// server.ts (Express Backend Route for Singapore Carpark API)
-import express from 'express';
+  const ltaSnippet = `// /api/carparkavailability.ts (Serverless Function)
+// Pulls live data from LTA's DataMall CarParkAvailabilityv2
+// Target: https://datamall2.mytransport.sg/ltaodataservice/CarParkAvailabilityv2
+// Required Header: AccountKey: <your_key>
 
-const app = express();
-app.use(express.json());
+import type { Request, Response } from 'express';
 
-// Proxy route fetching official Singapore DataMall / Data.gov.sg carpark feed
-app.get('/api/carparks', async (req, res) => {
-  try {
-    // 1. Fetch live car park availability from Data.gov.sg
-    const response = await fetch(
-      'https://api.data.gov.sg/v1/transport/carpark-availability',
-      { headers: { 'Accept': 'application/json' } }
-    );
-    const data = await response.json();
-    
-    // 2. Map raw carpark items to the frontend contract schema
-    // raw data format: data.items[0].carpark_data[]
-    res.json({
-      timestamp: data.items?.[0]?.timestamp || new Date().toISOString(),
-      rawItemsCount: data.items?.[0]?.carpark_data?.length || 0,
-      // Pass normalized carpark array here
-      carparks: [] 
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch Singapore carparks', details: String(error) });
+export default async function handler(req: Request, res: Response) {
+  const accountKey = process.env.LTA_DATAMALL_ACCOUNT_KEY || req.headers['accountkey'];
+  if (!accountKey) {
+    return res.status(401).json({ error: 'Missing AccountKey' });
   }
-});`;
+
+  const response = await fetch(
+    'https://datamall2.mytransport.sg/ltaodataservice/CarParkAvailabilityv2',
+    {
+      headers: {
+        'AccountKey': accountKey,
+        'accept': 'application/json',
+      },
+    }
+  );
+  const data = await response.json();
+  res.json(data);
+}`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
@@ -169,7 +166,7 @@ app.get('/api/carparks', async (req, res) => {
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
-            Express Route Template
+            LTA Serverless Function
           </button>
         </div>
 
@@ -314,17 +311,17 @@ app.get('/api/carparks', async (req, res) => {
           {activeTab === 'expressSnippet' && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-slate-600 font-medium">Ready-to-use Express route:</span>
+                <span className="text-slate-600 font-medium">Serverless /api/carparkavailability.ts endpoint:</span>
                 <button
-                  onClick={() => handleCopy(expressSnippet, 'express')}
+                  onClick={() => handleCopy(ltaSnippet, 'lta')}
                   className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md text-xs font-medium flex items-center gap-1"
                 >
-                  {copied === 'express' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copied === 'express' ? 'Copied!' : 'Copy Code'}</span>
+                  {copied === 'lta' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copied === 'lta' ? 'Copied!' : 'Copy Code'}</span>
                 </button>
               </div>
               <pre className="p-3 bg-slate-900 text-slate-100 rounded-xl font-mono text-[11px] overflow-x-auto max-h-72">
-                {expressSnippet}
+                {ltaSnippet}
               </pre>
             </div>
           )}

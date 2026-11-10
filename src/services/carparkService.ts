@@ -6,7 +6,7 @@ const STORAGE_BACKEND_CONFIG_KEY = 'sg_carpark_backend_config_v1';
 
 export const DEFAULT_BACKEND_CONFIG: BackendConfig = {
   mode: 'mock',
-  customEndpointUrl: '/api/carparks',
+  customEndpointUrl: '/api/carparkavailability',
   pollIntervalSec: 20,
   isSimulatingLiveDrift: true,
 };
