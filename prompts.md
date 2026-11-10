@@ -126,6 +126,17 @@ https://api-open.data.gov.sg/v2/real-time/api/wind-speed
   - `/api/_weatherProxy.ts` (shared proxy helper)
 - Updated `/api/health.ts` at project root to verify telemetry endpoints and report `AccountKey` presence.
 - Updated `/api/weather.ts` to automatically inject the `AccountKey: <key>` header on all 10 outgoing requests.
-- Zero hardcoded keys: reads from `process.env.ACCOUNT_KEY`, `process.env.LTA_DATAMALL_ACCOUNT_KEY`, or incoming request `AccountKey` header.
 - Mounted all serverless routes in `server.ts` and verified with live curl requests.
+
+---
+
+## Prompt 7: GitHub Push to weather_and_sports_tracker
+
+```text
+git push https://<GITHUB_PAT_TOKEN>@https://github.com/SuchitraNarayan/weather_and_sports_tracker.git
+```
+
+### Scope Delivered:
+- Pushed full application codebase including weather & sports tracker and serverless API endpoints to the dedicated `weather_and_sports_tracker` repository on GitHub.
+
 
