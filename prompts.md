@@ -64,3 +64,30 @@ collate all prompts to filename prompts.md
 
 ### Scope Delivered:
 - Created `prompts.md` documenting the chronological prompts and features developed throughout the session.
+
+---
+
+## Prompt 5: Outdoor & Sporting Activity Weather Tracker
+
+```text
+build a weather tracker application that tracks real time weather updates for outdoor and sporting activity. I have the following end points that can be used for the same 1. # Weather & environment (v2 host, wrapped responses) - all keyless, all live:
+https://api-open.data.gov.sg/v2/real-time/api/two-hr-forecast
+https://api-open.data.gov.sg/v2/real-time/api/twenty-four-hr-forecast
+https://api-open.data.gov.sg/v2/real-time/api/four-day-outlook
+https://api-open.data.gov.sg/v2/real-time/api/air-temperature
+https://api-open.data.gov.sg/v2/real-time/api/rainfall
+https://api-open.data.gov.sg/v2/real-time/api/psi
+https://api-open.data.gov.sg/v2/real-time/api/pm25
+https://api-open.data.gov.sg/v2/real-time/api/uv
+https://api-open.data.gov.sg/v2/real-time/api/relative-humidity
+https://api-open.data.gov.sg/v2/real-time/api/wind-speed
+```
+
+### Scope Delivered:
+- Serverless `/api/weather.ts` aggregator endpoint connecting concurrently to all 10 keyless Data.gov.sg v2 endpoints with 60s in-memory caching and resilient fallbacks against 429 rate limits.
+- Outdoor Activity Assessment Engine calculating real-time safety, hydration intervals, and readiness scores (Optimal, Good, Caution, Hazardous) for 6 major sports: Running, Road Cycling, Tennis/Pickleball, Watersports/Sailing, Nature Trail Hiking, and Field Sports.
+- Interactive Leaflet map displaying 47 Singapore town nowcasts, temperature stations, and rainfall radar.
+- Real-time environmental telemetry grid with tabular figures for Air Temp, Rain, UV Index, Relative Humidity, Wind Speed, PSI, and PM2.5.
+- 24-Hour Synoptic island forecast and 4-Day Extended Outlook.
+- Sports Activity detail modal with thermal stress advisories, hydration schedules, and recommended venues in Singapore.
+- Seamless switcher between the Weather Tracker and Carpark Live Tracker.

@@ -17,9 +17,11 @@ import { CarparkMap } from './components/CarparkMap';
 import { CarparkDetailModal } from './components/CarparkDetailModal';
 import { RatesCalculatorModal } from './components/RatesCalculatorModal';
 import { BackendIntegrationModal } from './components/BackendIntegrationModal';
+import { WeatherDashboard } from './components/weather/WeatherDashboard';
 import { Inbox, Compass, Search } from 'lucide-react';
 
 export default function App() {
+  const [activeApp, setActiveApp] = useState<'weather' | 'carpark'>('weather');
   const [carparks, setCarparks] = useState<Carpark[]>(INITIAL_CARPARKS);
   const [selectedCarpark, setSelectedCarpark] = useState<Carpark | null>(null);
   const [detailCarpark, setDetailCarpark] = useState<Carpark | null>(null);
@@ -217,6 +219,10 @@ export default function App() {
     });
   };
 
+  if (activeApp === 'weather') {
+    return <WeatherDashboard onSwitchToCarpark={() => setActiveApp('carpark')} />;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900 font-sans">
       {/* 3-Zone Top Bar */}
@@ -233,6 +239,7 @@ export default function App() {
         onToggleFavoritesOnly={() =>
           setFilters((prev) => ({ ...prev, showFavoritesOnly: !prev.showFavoritesOnly }))
         }
+        onSwitchToWeather={() => setActiveApp('weather')}
       />
 
       {/* Main Workspace Body */}

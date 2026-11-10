@@ -12,6 +12,7 @@ interface HeaderProps {
   favoritesCount: number;
   showFavoritesOnly: boolean;
   onToggleFavoritesOnly: () => void;
+  onSwitchToWeather?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -25,6 +26,7 @@ export const Header: React.FC<HeaderProps> = ({
   favoritesCount,
   showFavoritesOnly,
   onToggleFavoritesOnly,
+  onSwitchToWeather,
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-slate-200">
@@ -91,12 +93,21 @@ export const Header: React.FC<HeaderProps> = ({
             <span>Rates Estimator</span>
           </button>
 
+          {onSwitchToWeather && (
+            <button
+              onClick={onSwitchToWeather}
+              className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors whitespace-nowrap"
+            >
+              <span>Weather & Sports</span>
+            </button>
+          )}
+
           <button
             onClick={onOpenBackendModal}
             className="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors whitespace-nowrap"
           >
             <Code2 className="w-4 h-4" />
-            <span>Backend API Config</span>
+            <span>Backend API</span>
           </button>
         </nav>
 

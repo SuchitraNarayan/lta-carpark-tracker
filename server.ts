@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import healthHandler from './api/health.ts';
 import carparkAvailabilityHandler from './api/carparkavailability.ts';
+import weatherHandler from './api/weather.ts';
 
 dotenv.config();
 
@@ -24,6 +25,10 @@ async function startServer() {
 
   app.all('/api/carparkavailability', (req, res) => {
     return carparkAvailabilityHandler(req, res);
+  });
+
+  app.all('/api/weather', (req, res) => {
+    return weatherHandler(req, res);
   });
 
   // Alias for convenience / backward-compatibility with frontend
