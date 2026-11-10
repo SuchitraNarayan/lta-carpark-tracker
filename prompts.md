@@ -91,3 +91,41 @@ https://api-open.data.gov.sg/v2/real-time/api/wind-speed
 - 24-Hour Synoptic island forecast and 4-Day Extended Outlook.
 - Sports Activity detail modal with thermal stress advisories, hydration schedules, and recommended venues in Singapore.
 - Seamless switcher between the Weather Tracker and Carpark Live Tracker.
+
+---
+
+## Prompt 6: Serverless Weather Endpoints with AccountKey Header
+
+```text
+1. add a serverless connection that pulls live data from     # Weather & environment (v2 host, wrapped responses) - all keyless, all live:
+https://api-open.data.gov.sg/v2/real-time/api/two-hr-forecast
+https://api-open.data.gov.sg/v2/real-time/api/twenty-four-hr-forecast
+https://api-open.data.gov.sg/v2/real-time/api/four-day-outlook
+https://api-open.data.gov.sg/v2/real-time/api/air-temperature
+https://api-open.data.gov.sg/v2/real-time/api/rainfall
+https://api-open.data.gov.sg/v2/real-time/api/psi
+https://api-open.data.gov.sg/v2/real-time/api/pm25
+https://api-open.data.gov.sg/v2/real-time/api/uv
+https://api-open.data.gov.sg/v2/real-time/api/relative-humidity
+https://api-open.data.gov.sg/v2/real-time/api/wind-speed
+                                          all requests need the header: AccountKey: 1. store this in /api folder (at project root level) 2. include a /health.ts . do not hardcore any keys, i'll include them later
+```
+
+### Scope Delivered:
+- Created discrete serverless endpoint files stored in the `/api` folder at project root level:
+  - `/api/two-hr-forecast.ts`
+  - `/api/twenty-four-hr-forecast.ts`
+  - `/api/four-day-outlook.ts`
+  - `/api/air-temperature.ts`
+  - `/api/rainfall.ts`
+  - `/api/psi.ts`
+  - `/api/pm25.ts`
+  - `/api/uv.ts`
+  - `/api/relative-humidity.ts`
+  - `/api/wind-speed.ts`
+  - `/api/_weatherProxy.ts` (shared proxy helper)
+- Updated `/api/health.ts` at project root to verify telemetry endpoints and report `AccountKey` presence.
+- Updated `/api/weather.ts` to automatically inject the `AccountKey: <key>` header on all 10 outgoing requests.
+- Zero hardcoded keys: reads from `process.env.ACCOUNT_KEY`, `process.env.LTA_DATAMALL_ACCOUNT_KEY`, or incoming request `AccountKey` header.
+- Mounted all serverless routes in `server.ts` and verified with live curl requests.
+

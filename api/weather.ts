@@ -1,22 +1,43 @@
 import type { Request, Response } from 'express';
+import { proxyWeatherEndpoint } from './_weatherProxy.ts';
 
 // Cache structure
 let cachedWeatherPayload: any = null;
 let lastCacheTimestamp = 0;
 const CACHE_TTL_MS = 60 * 1000; // 60 seconds
 
-// Safe fetch helper with timeout
-async function safeFetchJson(url: string, timeoutMs: number = 4000): Promise<any> {
+const ENDPOINT_MAP: Record<string, string> = {
+  'two-hr-forecast': 'https://api-open.data.gov.sg/v2/real-time/api/two-hr-forecast',
+  'twenty-four-hr-forecast': 'https://api-open.data.gov.sg/v2/real-time/api/twenty-four-hr-forecast',
+  'four-day-outlook': 'https://api-open.data.gov.sg/v2/real-time/api/four-day-outlook',
+  'air-temperature': 'https://api-open.data.gov.sg/v2/real-time/api/air-temperature',
+  rainfall: 'https://api-open.data.gov.sg/v2/real-time/api/rainfall',
+  psi: 'https://api-open.data.gov.sg/v2/real-time/api/psi',
+  pm25: 'https://api-open.data.gov.sg/v2/real-time/api/pm25',
+  uv: 'https://api-open.data.gov.sg/v2/real-time/api/uv',
+  'relative-humidity': 'https://api-open.data.gov.sg/v2/real-time/api/relative-humidity',
+  'wind-speed': 'https://api-open.data.gov.sg/v2/real-time/api/wind-speed',
+};
+
+// Safe fetch helper with timeout and AccountKey header injection
+async function safeFetchJson(url: string, accountKey?: string, timeoutMs: number = 4500): Promise<any> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  const headers: Record<string, string> = {
+    'User-Agent': 'SingaporeSportWeather/1.0',
+    Accept: 'application/json',
+  };
+
+  // Attach AccountKey header if provided (no hardcoded keys)
+  if (accountKey && accountKey.trim().length > 0) {
+    headers['AccountKey'] = accountKey.trim();
+  }
 
   try {
     const res = await fetch(url, {
       signal: controller.signal,
-      headers: {
-        'User-Agent': 'SingaporeSportWeather/1.0',
-        Accept: 'application/json',
-      },
+      headers,
     });
     clearTimeout(timer);
     if (!res.ok) {
@@ -33,15 +54,31 @@ async function safeFetchJson(url: string, timeoutMs: number = 4000): Promise<any
 
 /**
  * Serverless Weather Aggregator Endpoint
- * Pulls from all 10 Singapore Open Data v2 endpoints
+ * Pulls from all 10 Singapore Open Data v2 endpoints with AccountKey header
+ * Path: /api/weather
  */
 export default async function handler(req: Request, res: Response) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, AccountKey, Authorization');
 
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
+  }
+
+  // Resolve AccountKey from environment or incoming request header
+  const accountKey =
+    (req.headers['accountkey'] as string) ||
+    process.env.ACCOUNT_KEY ||
+    process.env.LTA_DATAMALL_ACCOUNT_KEY ||
+    process.env.LTA_ACCOUNT_KEY ||
+    process.env.DATAMALL_ACCOUNT_KEY ||
+    '';
+
+  // Support single endpoint proxying via ?endpoint=...
+  const singleEndpoint = (req.query['endpoint'] as string)?.toLowerCase();
+  if (singleEndpoint && ENDPOINT_MAP[singleEndpoint]) {
+    return proxyWeatherEndpoint(singleEndpoint, ENDPOINT_MAP[singleEndpoint], req, res);
   }
 
   const now = Date.now();
@@ -53,11 +90,12 @@ export default async function handler(req: Request, res: Response) {
       ...cachedWeatherPayload,
       isCached: true,
       cacheAgeSeconds: Math.round((now - lastCacheTimestamp) / 1000),
+      hasAccountKeyAttached: Boolean(accountKey && accountKey.trim().length > 0),
     });
   }
 
   try {
-    // Fetch all 10 live endpoints concurrently
+    // Fetch all 10 live endpoints concurrently with AccountKey header
     const [
       twoHrRes,
       twentyFourHrRes,
@@ -70,16 +108,16 @@ export default async function handler(req: Request, res: Response) {
       humidityRes,
       windRes,
     ] = await Promise.all([
-      safeFetchJson('https://api-open.data.gov.sg/v2/real-time/api/two-hr-forecast'),
-      safeFetchJson('https://api-open.data.gov.sg/v2/real-time/api/twenty-four-hr-forecast'),
-      safeFetchJson('https://api-open.data.gov.sg/v2/real-time/api/four-day-outlook'),
-      safeFetchJson('https://api-open.data.gov.sg/v2/real-time/api/air-temperature'),
-      safeFetchJson('https://api-open.data.gov.sg/v2/real-time/api/rainfall'),
-      safeFetchJson('https://api-open.data.gov.sg/v2/real-time/api/psi'),
-      safeFetchJson('https://api-open.data.gov.sg/v2/real-time/api/pm25'),
-      safeFetchJson('https://api-open.data.gov.sg/v2/real-time/api/uv'),
-      safeFetchJson('https://api-open.data.gov.sg/v2/real-time/api/relative-humidity'),
-      safeFetchJson('https://api-open.data.gov.sg/v2/real-time/api/wind-speed'),
+      safeFetchJson(ENDPOINT_MAP['two-hr-forecast'], accountKey),
+      safeFetchJson(ENDPOINT_MAP['twenty-four-hr-forecast'], accountKey),
+      safeFetchJson(ENDPOINT_MAP['four-day-outlook'], accountKey),
+      safeFetchJson(ENDPOINT_MAP['air-temperature'], accountKey),
+      safeFetchJson(ENDPOINT_MAP['rainfall'], accountKey),
+      safeFetchJson(ENDPOINT_MAP['psi'], accountKey),
+      safeFetchJson(ENDPOINT_MAP['pm25'], accountKey),
+      safeFetchJson(ENDPOINT_MAP['uv'], accountKey),
+      safeFetchJson(ENDPOINT_MAP['relative-humidity'], accountKey),
+      safeFetchJson(ENDPOINT_MAP['wind-speed'], accountKey),
     ]);
 
     // 1. Parse Two-Hour Forecast
@@ -248,7 +286,7 @@ export default async function handler(req: Request, res: Response) {
       windDirection: item.wind?.direction || 'NE',
     }));
 
-    // Heat Index Calculation (Rothfusz equation approximation)
+    // Heat Index Calculation
     const T = avgTemp;
     const R = avgHumidity;
     const heatIndex = Math.round(
@@ -316,6 +354,7 @@ export default async function handler(req: Request, res: Response) {
       fourDayOutlook: fourDayOutlook.length > 0 ? fourDayOutlook : fallbackFourDayOutlook,
       heatIndexCelsius: Math.max(avgTemp, Math.min(48, heatIndex)),
       isCached: false,
+      hasAccountKeyAttached: Boolean(accountKey && accountKey.trim().length > 0),
     };
 
     cachedWeatherPayload = payload;
@@ -325,7 +364,6 @@ export default async function handler(req: Request, res: Response) {
     return res.status(200).json(payload);
   } catch (error: any) {
     console.error('Weather aggregation failed:', error);
-    // Return cached if available
     if (cachedWeatherPayload) {
       return res.status(200).json({
         ...cachedWeatherPayload,

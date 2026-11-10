@@ -15,19 +15,33 @@ export default async function handler(req: Request, res: Response) {
   }
 
   const accountKey =
+    process.env.ACCOUNT_KEY ||
     process.env.LTA_DATAMALL_ACCOUNT_KEY ||
     process.env.LTA_ACCOUNT_KEY ||
-    process.env.DATAMALL_ACCOUNT_KEY;
+    process.env.DATAMALL_ACCOUNT_KEY ||
+    (req.headers['accountkey'] as string);
 
   return res.status(200).json({
     status: 'healthy',
-    service: 'lta-carpark-tracker-api',
+    service: 'singapore-live-telemetry-api',
     timestamp: new Date().toISOString(),
-    hasLtaAccountKeyConfigured: Boolean(accountKey && accountKey.trim().length > 0),
-    ltaDataMallEndpoint: 'https://datamall2.mytransport.sg/ltaodataservice/CarParkAvailabilityv2',
+    hasAccountKeyConfigured: Boolean(accountKey && accountKey.trim().length > 0),
     endpoints: {
       health: '/api/health',
-      carParkAvailability: '/api/carparkavailability',
+      weatherAggregate: '/api/weather',
+      carparkAvailability: '/api/carparkavailability',
+      weatherSensors: [
+        '/api/two-hr-forecast',
+        '/api/twenty-four-hr-forecast',
+        '/api/four-day-outlook',
+        '/api/air-temperature',
+        '/api/rainfall',
+        '/api/psi',
+        '/api/pm25',
+        '/api/uv',
+        '/api/relative-humidity',
+        '/api/wind-speed',
+      ],
     },
   });
 }
