@@ -1,6 +1,0 @@
-{
-  "name": "SG Carpark Live Tracker",
-  "description": "Real-time car park availability tracker across Singapore with interactive map, live lot occupancy, parking rates, and HDB/URA/commercial filters.",
-  "requestFramePermissions": ["geolocation"],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
